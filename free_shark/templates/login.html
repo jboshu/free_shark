@@ -1,0 +1,41 @@
+
+{% extends "layout.html" %}
+
+{% block style %}
+{{super()}}
+<style>
+    .container{
+        height: 100%;
+        align-items: center;
+        display:flex;
+        margin: auto;
+        flex-direction: column;
+    }
+
+    .messages{
+        min-width: -webkit-fill-available;
+    }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center align-items-center" style="min-width: -webkit-fill-available;flex:auto">
+        {% block middle_content %}
+            <div class="col-md-4 card p-4">
+                <h1 class="mt-2">欢迎登录</h1>
+                {% from 'bootstrap/form.html' import render_form,render_form_row %}
+                {{ render_form(form,role="form",button_map={"submit":"block btn-primary"},action='login?next=/commodity/index') }}
+                <div class="text-right"><a href="register">没有账号? 点此注册</a></div>
+            </div>
+        {% endblock %}
+    </div>
+{% endblock %}
+
+{% block script_at_end %}
+    <script src="/static/js/jquery.backstretch.min.js"></script>
+    <script>
+        $.backstretch("/static/image/login_background.jpeg");
+    </script>
+{% endblock %}

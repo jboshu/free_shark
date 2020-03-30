@@ -1,0 +1,66 @@
+{% extends 'login.html' %}
+{% block middle_content %}
+
+<div class="row">
+    <h1 class="col-md-12 mb-5">
+        激活
+        <small class="text-muted">你的邮箱是{{current_user.email}}吗？</small>
+    </h1>
+    <div class="col-md-6 "><button class="btn btn-block btn-primary" onclick="send_email()" id="yes_btn">是，发送激活邮件</button></div>
+    <div class="col-md-6 "><button class="btn btn-block btn-secondary" onclick="window.location.href='/auth/editUser?target=email'">不是，前往修改</button></div>
+</div>
+<div class="modal" tabindex="-1" role="dialog" id="modal">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">邮件发送成功</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>请前往邮箱查收邮件！</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">好</button>
+            </div>
+          </div>
+        </div>
+      </div>
+{% endblock %}
+{% block script_at_end %}
+<script>
+
+    function count_down(){
+        remain_secs--;
+        if(remain_secs==0){
+            $("#yes_btn").removeAttr("disabled");
+            $("#yes_btn").text("重新发送");
+        }else{
+            $("#yes_btn").text("重新发送 ("+remain_secs+")");
+            setTimeout(count_down,1000);
+        }
+    }
+
+    var user_email='{{current_user.email}}';
+    var remain_secs=60;
+    function send_email(){
+        $("#yes_btn").attr("disabled","true");
+        remain_secs=60;
+        setTimeout(count_down,1000)
+        var url="/api/user/send_act_email";
+        var postData={
+            email:user_email
+        }
+        $.post(url,postData,function(data){
+            console.log("success,",data);
+            if(data.status==200){
+                $("#modal").modal('show');
+            }
+        }).fail(function(data){
+            console.log("error",data);
+            alert("请求频率过高，请稍后再试!");
+        })
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "edit_or_add_user_base.html" %}
+
+{% block form_title %}
+注册用户
+{% endblock %}
+
+{% set submit_url="/api/user/add" %}
+{% set usernameInputEnable=True %}
+{% set passwordInputEnable=True %}
+{% set emailInputEnable=True %}
+{% set submit_url="/api/user/add" %}
+{% block submit_function %}
+<script>
+    $("#register_form").on('submit',function(e){
+        e.preventDefault();
+        if(usernameField.isValid()&&passwordField.isValid()&&emailField.isValid()&&passwordConfirmField.isValid()){
+            var postData={
+                username:usernameField.val(),
+                password:passwordField.val(),
+                email:emailField.val()
+            }
+            var url='{{ submit_url }}';
+            $.post(url,postData,function(data){
+                alert("注册成功!现在请去登录");
+                window.location.href="/auth/login"
+            })
+        }
+    })
+</script>
+{% endblock %}

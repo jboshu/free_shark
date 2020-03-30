@@ -1,0 +1,241 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block style %}
+    <style>
+        body{
+            padding-top: 3.5rem;
+        }
+    </style>
+<link rel="stylesheet" href="/static/css/tempusdominus-bootstrap-4.min.css">
+{% endblock %}
+{% block nav_bar %}
+{{super()}}
+{% set d1=request.args.to_dict()|set_default("page_num",1)|set_default("page_size",20)|set_default("method","search") %}
+{% set d2=d1.copy() %}
+<ul class="nav nav-tabs d-flex justify-content-center mb-4 bg-light" id="tab_nav">
+    
+    <li class="nav-item">
+        <a class="nav-link {% if 'mask' not in d1 or d1['mask']|int>=0 %}active{% endif %}" href="/admin/user?{{d1|replace_dict('mask',1)|urlencode}}">
+            <i class="fas fa-user-tie"></i>
+            普通用户
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link {% if d2.get('mask',1)|int<0 %}active{% endif %}" href="/admin/user?{{d1|replace_dict('mask',-1)|urlencode}}">
+            <i class="fas fa-trash"></i>
+            回收站
+        </a>
+    </li>
+</ul>
+{% endblock %}
+{% block content %}
+{% set d1=request.args.to_dict()|set_default("page_num",1)|set_default("page_size",20)|set_default("method","search")|set_default("mask",1) %}
+<div class="input-group mb-3">
+    <div class="input-group-prepend">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="search_target">选择搜索类型</button>
+        <div class="dropdown-menu">
+        <a class="dropdown-item" href="JavaScript:$('#search_target').text('用户名')">用户名</a>
+        <a class="dropdown-item" href="javascript:$('#search_target').text('邮箱')">邮箱</a>
+        <div role="separator" class="dropdown-divider"></div>
+        <a class="dropdown-item" href="javascript:$('#search_target').text('模糊搜索')">模糊搜索</a>
+        </div>
+    </div>
+    <input type="text" class="form-control" aria-label="Text input with dropdown button" id="search_content">
+    <div class="input-group-append">
+        <button class="btn btn-outline-secondary" onclick="searchUser()">搜索</button>
+    </div>
+</div>
+<table class="table table-hover table-striped">
+    <thead>
+        <tr>
+            <th scope="col">id</th>
+            <th scope="col">用户名</th>
+            <th scope="col">邮箱</th>
+            <th scope="col">角色</th>
+            <th scope="col">创建时间</th>
+            <th scope="col">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in ans %}           
+        <tr>
+            <th scope="row">{{user.id}}</th>
+            <td>{{user.username}}</th>
+            <td>{{user.email}}</th> 
+            <td>
+                {% for role in user.role %}
+                <span class="badge badge-pill badge-{% if role=="admin" %}primary {% elif role=="forbid" %}secondary {% elif role=="blocked" %}warning {% elif role=="deleted" %}danger {% else %}info {% endif %}">{{role}}</span>
+                {% endfor %}
+            </td>
+            <td >{{user.create_time}}</td>
+            <td>
+                {% if d1['mask']|int>0 %}
+                <button type="button" class="btn btn-primary btn-sm" onclick="updateUser({{user.id}})">修改</button>
+                <button type="button" class="btn btn-warning btn-sm dropdown-toggle" data-toggle="dropdown" id="blockBtn{{user.id}}">封禁</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="deleteUser({{user.id}})">删除</button>
+                <div class="dropdown-menu p-4" aria-labelledby="blockBtn{{user.id}}" data-flip="false">
+                    <form action="\api\block\quickCreate" id="blockForm{{user.id}}" method="POST">
+                    <h3>快速封禁</h3>
+                        <input type="text" style="display: none;" value="{{user.id}}" name="user_id">
+                        <div class="form-group">
+                            <label for="blockReason{{user.id}}">理由</label>
+                            <input type="text" class="form-control" id="blockReason{{user.id}}" placeholder="填写封禁的理由" name="reason" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="blockTime{{user.id}}">时长</label>
+                            <input type="number" class="form-control" id="blockTime{{user.id}}" placeholder="时长(天)" name="time" required>
+                        </div>
+                        <div class="mb-2"><a href="block?method=search&user_id={{user.id}}">查看该用户封禁详情</a></div>
+                    </form>
+                    <button class="btn btn-warning" onclick="$('#blockForm{{user.id}}').ajaxSubmit(onSuccess)"  
+                            {% if user.is_blocked %}disabled{% endif %}
+                        >{% if user.is_blocked %}封禁中{% else %}立即封禁{% endif %}
+                        </button>
+                </div>
+                {% else %}
+                <button type="button" class="btn btn-info btn-sm" onclick="redo({{user.id}})">恢复用户</button>
+                {% endif %}
+            </td> 
+            
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% from 'utils.html' import Pagination %}
+{{ Pagination(page_num,page_size,count) }}
+<div class="modal fade show" role="dialog" id="update_modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    修改用户
+                </h5>
+            </div>
+            <div class="modal-body">
+                <form action="/api/user/update" id="update_form">
+                    <input type="text" name="id" style="display: none;">
+                    <div class="form-group">
+                        <label for="usernameEditInput">用户名</label>
+                        <input type="text" class="form-control" id="usernameEditInput" name="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailEditInput">email</label>
+                        <input type="email" class="form-control" id="emailEditInput" name="email">
+                    </div>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" name="status" id="statusEditSwitch">
+                        <input type="text" name="status" style="display: none;" value="off">
+                        <label class="custom-control-label" for="statusEditSwitch">激活状态</label>
+                    </div>
+                    <div class="custom-control custom-switch text-danger">
+                        <input type="checkbox" class="custom-control-input" name="type" id="typeEditSwitch">
+                        <input type="text" name="type" style="display: none;" value="off">
+                        <label class="custom-control-label" for="typeEditSwitch">管理员</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="$('#update_form').ajaxSubmit(onSuccess)">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script_at_end %}
+{{super()}}
+<script src="/static/js/moment.js"></script>
+<script src="/static/js/tempusdominus-bootstrap-4.min.js"></script>
+<script>
+    $("body").removeClass("bg-light").addClass("bg-white")
+
+    function check_callback(){
+        return;
+    }
+    function onSuccess(data){
+        $("#update_modal").modal('hide');
+        window.location.reload();
+    }
+    function updateUser(id){
+        var url="/api/user/search"
+        var postData={
+            id:id,
+            page_num:1,
+            page_size:1
+        };
+        $.post(url,postData,function(data){
+            $("#update_form input[name='username']").val(data.data[0].username);
+            $("#update_form input[name='id']").val(data.data[0].id);
+            $("#update_form input[name='email']").val(data.data[0].email);
+            if(data.data[0].status!=2){
+                $("#update_form input[name='status']").prop("checked",true);
+            }else{
+                $("#update_form input[name='status']").prop("checked",false);
+            }
+            if(!data.data[0].type){
+                $("#update_form input[name='type']").prop("checked",true);
+            }else{
+                $("#update_form input[name='type']").prop("checked",false);
+            }
+            $("#update_modal").modal('show');
+        });
+    }
+    function deleteUser(id){
+        var url="/api/user/delete"
+        var postData={
+            id:id
+        }
+        $.post(url,postData,function(){
+            window.location.reload();
+        })
+    }
+    function checkUsername_1(){
+        var id=$("#update_form input[name='id']").val();
+        return checkUsername.call(this,id);
+    }
+    function checkEmail_1(){
+        var id=$("#update_form input[name='id']").val();
+        return checkEmail.call(this,id);
+    }
+    function redo(id){
+        var url='/api/user/redoDelete'
+        var postData={
+            id:id
+        }
+        $.post(url,postData,function(){
+            window.location.reload()
+        })
+    }
+    function searchUser(){
+        var target=$("#search_target").text();
+        var content=$("#search_content").val();
+        if(content.length==0){
+            content="%%";
+        }
+        var postData={
+            page_num:1,
+            page_size:20
+        };
+        switch(target){
+            case "用户名":
+                postData['username']=content;
+                break;
+            case "邮箱":
+                postData['email']=content;
+                break;
+            case "模糊搜索":
+            default:
+                postData['username']=postData['email']=content;
+                break;
+        }
+        var url="/api/user/search";
+        window.location.href="/admin/user?method=search&"+parseParams(postData);
+
+    }
+    var usernameEditField=InputField("#update_form input[name='username']",checkUsername_1);
+    var emailEditField=InputField("#update_form input[name='email']",checkEmail);
+</script>
+
+{% endblock %} 

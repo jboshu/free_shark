@@ -1,0 +1,119 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col d-flex justify-content-center"><canvas id="blockStartChart" width="600" height="400"></canvas></div>
+    <div class="col d-flex justify-content-center"><canvas id="userRegisterChart" width="600" height="400"></canvas></div>
+</div>
+
+
+{% endblock %}
+
+{% block script_at_end %}
+{{super()}}
+<script src="/static/js/moment.js"></script>
+<script src="/static/js/echarts.common.js"></script>
+<script>
+    var blockStartChart = echarts.init(document.getElementById('blockStartChart'),'light');
+    var userRegisterChart = echarts.init(document.getElementById('userRegisterChart'));
+    var option = option = {
+        legend: {data:['开始的封禁数','终止的封禁数']},
+        tooltip: {},
+        xAxis: [{type: 'category'}],
+        yAxis: {type:'value'},
+        series: [
+            {type: 'line',smooth:true}
+        ],
+        dataZoom: [
+        {   
+            type: 'slider', // 这个 dataZoom 组件是 slider 型 dataZoom 组件
+            start: 60,      // 左边在 10% 的位置。
+            end: 100         // 右边在 60% 的位置。
+        }],
+        width:"100%",
+        height:"100%"
+    };
+    var userOption={
+        legend: {data:['用户注册']},
+        tooltip: {},
+        xAxis: [{type: 'category'}],
+        yAxis: {type:'value'},
+        series: [
+            {type: 'line',smooth:true}
+        ],
+        dataZoom: [
+        {   
+            type: 'slider', // 这个 dataZoom 组件是 slider 型 dataZoom 组件
+            start: 60,      // 左边在 10% 的位置。
+            end: 100         // 右边在 60% 的位置。
+        }]
+
+    };
+    // 使用刚指定的配置项和数据显示图表。
+    blockStartChart.setOption(option);
+    var start_data,end_data,during_data,user_data;
+    var postDict={start_time:moment().subtract(7,'days').format("YYYY-MM-DD hh:mm:ss"),end_time:moment().add(1,'days').format("YYYY-MM-DD hh:mm:ss")};
+    function fetch_start_data(){
+        $.get("/api/stat/block/start",postDict,function(data){start_data=data}).then(fetch_end_data).then(fetch_during_data)
+    }
+
+    function fetch_end_data(){
+        $.get("/api/stat/block/end",postDict,function(data){end_data=data}).then(draw_chart);
+    }
+
+    function fetch_during_data(){
+        $.get("/api/stat/block/during",{start_time:"2019-01-01 1:1:1",end_time:"2019-12-31 23:59:59"},function(data){during_data=data}).then(draw_chart);
+    }
+
+    function fetch_user_data(){
+        $.get("/api/stat/user/register",postDict,function(data){user_data=data;}).then(draw_chart);
+    }
+
+    function draw_chart(){
+        option.series=[
+        {
+            data:start_data.data.map((e)=>e.count),
+            type:'bar',
+            smooth:true,
+            name:'开始的封禁数',
+        },
+        {
+            data:end_data.data.map((e)=>e.count),
+            type:'bar',
+            smooth:true,
+            name:'终止的封禁数',
+        }
+        ];
+        option.xAxis=[
+        {
+            type: 'category',
+            data:start_data.data.map((e)=>e.date)
+        }];
+        blockStartChart.setOption(option);
+        userOption.series=[{
+            data:user_data.data.map(e=>e.count),
+            type:'line',
+            smooth:true,
+            name:'用户注册',
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                    offset: 0,
+                    color: 'rgb(255, 158, 68)'
+                }, {
+                    offset: 1,
+                    color: 'rgb(255, 70, 131)'
+                }])
+            },
+        }];
+        userOption.xAxis=[
+        {
+            type:'category',
+            data:user_data.data.map(e=>e.date)
+        }];
+        userRegisterChart.setOption(userOption);
+        
+    }
+    fetch_start_data();
+    fetch_user_data();
+</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "edit_or_add_user_base.html" %}
+{% set target=request.args.get("target") %}
+
+{% set show_username=current_user.username %}
+{% set show_email=current_user.email %}
+
+{% block form_title %}
+编辑用户信息
+{% endblock %}
+
+{% block content %}
+{{super()}}
+<input type="text" value="{{current_user.id}}" id="userIdInput" disabled style="display: none;">
+{% endblock %}
+
+{% set submit_url="/api/user/update" %}
+
+{% block submit_function %}
+<script>
+    $("#register_form").on('submit',function(e){
+        e.preventDefault();
+        if(usernameField.isNonInvalid()&&passwordField.isNonInvalid()&&emailField.isNonInvalid()&&passwordConfirmField.isNonInvalid()){
+            var postData={
+                username:usernameField.val(),
+                password:passwordField.val(),
+                email:emailField.val(),
+                id:$("#userIdInput").val()
+            }
+            var url='{{ submit_url }}';
+            $.post(url,postData,function(data){
+                alert("修改成功!现在返回主页");
+                window.location.href="/auth/login"
+            })
+        }
+    })
+</script>
+{% endblock %}
+
+{% block update_functions %}
+<script>
+    function before_update(){
+        $("#submit_btn").attr("disabled","true");
+        $("#submit_btn").text("验证中...")
+    }
+    function check_callback(){
+        if(usernameField.isNonInvalid()&&passwordField.isNonInvalid()&&emailField.isNonInvalid()&&passwordConfirmField.isNonInvalid()){
+            $("#submit_btn").removeAttr("disabled");
+            $("#submit_btn").text("确认");
+        }
+    }
+</script>
+{% endblock %}

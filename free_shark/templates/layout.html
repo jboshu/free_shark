@@ -1,0 +1,100 @@
+<head>
+    {{ bootstrap.load_css() }}
+    {% block style %}
+    <style>
+        body{
+            padding-top: 4.5rem;
+        }
+    </style>
+    {% endblock %}
+    <script defer src="/static/js/all.min.js"></script>
+</head>
+
+<body class="bg-light">
+    {% block nav_bar %}
+    <nav class="navbar navbar-expand-md navbar-dark bg-primary fixed-top">
+            <a class="navbar-brand" href="#">闲鲨</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <div class="navbar-nav mr-auto">
+                    {% from 'bootstrap/nav.html' import render_nav_item %}
+                    {{ render_nav_item('commodity.index','首页') }}
+                    {{ render_nav_item('commodity.get_my_commodity','商品') }}
+                    {{ render_nav_item('auth.indexorder','订单') }}
+                    {% if not current_user.is_anonymous %}
+                    {{ render_nav_item('auth.logout','登出') }}
+                    {% if current_user.is_admin %}
+                    {{ render_nav_item('admin.index_view','管理首页') }}
+                    {% endif %}
+                    {{ render_nav_item('auth.editUser','修改个人信息') }}
+                    {% else %}
+                    {{ render_nav_item('auth.login','登录') }}
+                    {% endif %}
+                    
+                </div>
+            </div> 
+    </nav>
+    {% endblock %}
+
+    <main class="container" role="main" id="main">
+        {%block messages %}
+        <div class="alert alert-danger shadow" role="alert" id="network_problem" style="display: none;">
+           警告: 连接出现问题
+        </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                
+                {% if messages %}
+                    <div class="messages" style="">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{category}} shadow fade show alert-dismissible" role="alert">
+                                {% autoescape false %}
+                                {{ message }}
+                                {% endautoescape  %}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+            {% endwith %}
+        {% endblock %}
+        
+        {%block content %}{% endblock %}
+
+        {% block footer%}
+        {% endblock %}
+    </main>
+    {{ bootstrap.load_js() }}
+    <script src="/static/js/lodash.min.js"></script>
+    <script src="/static/js/jquery.form.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script>
+        var csrf_token = "{{ csrf_token() }}";
+    
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                }
+            }
+        });
+        {% if HEARTBEAT_FLAG %}
+        function heartbeat(){
+            var url="/api/heartbeat";
+            $.post(url,function(d){
+                $("#network_problem").css("display","none");
+            }).fail(function(d){
+                console.log(d)
+                $("#network_problem").css("display","block");
+            });
+        }
+        setInterval(heartbeat,1000);
+        {% endif %}
+    </script>
+    {% block script_at_end %}
+    {% endblock %}
+</body>

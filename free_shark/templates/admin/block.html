@@ -1,0 +1,181 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block style %}
+{{super()}}
+<link rel="stylesheet" href="/static/css/tempusdominus-bootstrap-4.min.css">
+
+{% endblock %}
+
+{% block content %}
+<div class="input-group mb-3">
+    <div class="input-group-prepend">
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="search_target">选择搜索类型</button>
+        <div class="dropdown-menu">
+        <a class="dropdown-item" href="JavaScript:$('#search_target').text('用户名')">用户名</a>
+        <a class="dropdown-item" href="javascript:$('#search_target').text('用户id')">用户id</a>
+        <a class="dropdown-item" href="javascript:$('#search_target').text('理由')">理由</a>
+        <div role="separator" class="dropdown-divider"></div>
+        <a class="dropdown-item" href="javascript:$('#search_target').text('模糊搜索')">模糊搜索</a>
+        </div>
+    </div>
+    <input type="text" class="form-control" aria-label="Text input with dropdown button" id="search_content">
+    <div class="input-group-append">
+        <button class="btn btn-outline-secondary" onclick="searchBlock()">搜索</button>
+    </div>
+</div>
+<p>
+    <a class="btn btn-primary btn-block" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+        增加封禁
+    </a>
+</p>
+<div class="collapse" id="collapseExample">
+    <div class="card card-body">
+        <form action="/api/block/add" method="POST" id="addBlockForm">
+            <div class="form-group form-row">
+                <div class="input-group col">
+                    <input type="text" class="form-control" name="user_id" id="user_id" placeholder="用户id" required>
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" onclick="changeTarget()" type="button">切换id/用户名</button>
+                    </div>
+                </div>
+                <div class="col">
+                    <input type="text" class="form-control" id="reasonInput" placeholder="理由" name="reason" required>
+                </div>
+            </div>
+            <div class="form-group form-row">
+                <div class="col">
+                    <div class="input-group date" id="datetimepicker_start" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker_start" placeholder="开始时间" onchange="checkEndTime()" name="start_time" required/>
+                        <div class="input-group-append" data-target="#datetimepicker_start" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="input-group date" id="datetimepicker_end" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker_end" placeholder="结束时间" onchange="checkStartTime()" name="end_time" required/>
+                        <div class="input-group-append" data-target="#datetimepicker_end" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-block btn-warning" type="button" onclick="$('#addBlockForm').ajaxSubmit(onSuccess)">确定</button>
+        </form>
+        
+    </div>
+</div>
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th scope="col">id</th>
+            <th scope="col">用户名</th>
+            <th scope="col">理由</th>
+            <th scope="col">开始时间</th>
+            <th scope="col">结束时间</th>
+            <th scope="col">操作</th>
+        </tr>
+    </thead>
+    <tbody class="">
+        {% for item in ans %}           
+        <tr>
+            <th scope="row">{{item.id}}</th>
+            <td>{{item.user.username}}</th>
+            <td>{{item.reason}}</th> 
+            <td >{{item.start_time}}</td>
+            <td>{{item.end_time}}</td> 
+            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeBlock({{item.id}})">撤除封禁</button></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% from 'utils.html' import Pagination %}
+{{ Pagination(page_num,page_size,count) }}
+
+{% endblock %}
+
+{% block script_at_end %}
+
+{{super()}}
+<script src="/static/js/moment.js"></script>
+<script src="/static/js/tempusdominus-bootstrap-4.min.js"></script>
+
+<script type="text/javascript">
+    $.fn.datetimepicker.Constructor.Default = $.extend({}, $.fn.datetimepicker.Constructor.Default, {
+        icons: {
+            time: 'far fa-clock',
+            date: 'far fa-calendar',
+            up: 'fas fa-chevron-up',
+            down: 'fas fa-chevron-down',
+            previous: 'fas fa-chevron-left',
+            next: 'fas fa-chevron-right',
+            today: 'far fa-calendar-check-o',
+            clear: 'far fa-trash',
+            close: 'far fa-times'
+        },
+    format:"YYYY-MM-DD hh:mm:ss" });
+    $(function () {
+        $('#datetimepicker_start').datetimepicker('useCurrent',false);
+        $('#datetimepicker_start').datetimepicker('minDate',moment())
+        $('#datetimepicker_end').datetimepicker('useCurrent',false);
+        $('#datetimepicker_end').datetimepicker('minDate',moment())
+    });
+    $("#datetimepicker_start").on('change.datetimepicker',onStartTimeChange)
+    $("#datetimepicker_end").on('change.datetimepicker',onEndTimeChange)
+    function onStartTimeChange(e){
+        var new_date=e.date;
+        $('#datetimepicker_end').datetimepicker('minDate',new_date);
+    }
+    function onEndTimeChange(e){
+        var new_date=e.date;
+        $('#datetimepicker_start').datetimepicker('maxDate',new_date);
+    }
+</script>
+<script>
+    function changeTarget(){
+        var target=$('#user_id').prop('placeholder');
+        if(target=="用户名"){
+            $('#user_id').prop('placeholder','用户id');
+            $('#user_id').prop('name','user_id');
+        }else{
+            $('#user_id').prop('placeholder','用户名');
+            $('#user_id').prop('name','username');
+        }
+    }
+    function removeBlock(id){
+        var url="/api/block/delete";
+        var postData={
+            id:id
+        }
+        $.post(url,postData,onSuccess);
+    }
+    function onSuccess(data){
+        window.location.reload();
+    }
+    function searchBlock(){
+        var url="/admin/block"
+        var postData={
+            page_num:1,
+            page_size:20
+        }
+        var content=$("#search_content").val();
+        var target=$("#search_target").text();
+        if(content.length==0){
+            content="%%";
+        }
+        switch(target){
+            case "用户名":
+                postData['username']=content;
+                break;
+            case "用户id":
+                postData['user_id']=content;
+                break;
+            case "理由":
+                postData['reason']=content;
+                break;
+        }
+        window.location.href="/admin/block?method=search&"+parseParams(postData);
+    }
+</script>
+
+{% endblock %}

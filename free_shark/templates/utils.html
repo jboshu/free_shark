@@ -1,0 +1,21 @@
+{% macro Pagination(page_num,page_size,count) %}
+
+    {%set d=request.args.to_dict()%}
+    {% set max_page=(count/page_size)|round(0,'ceil')|int %}
+
+    <nav class="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% set lastPageArgs=d.copy() %}
+            {% set pageArgs=d.copy() %}
+            {% set nextPageArgs=d.copy() %}
+            <li class="page-item {% if page_num==1 %}disabled{% endif %}"><a class="page-link" href="{{request.path}}?{{ lastPageArgs|replace_dict("page_num",page_num|int-1)|urlencode }}">上一页</a></li>
+            {% for page in range(1,max_page+1) %}
+            <li class="page-item {% if page==page_num %}active{% endif %}"><a class="page-link" href="{{request.path}}?{{ pageArgs|replace_dict("page_num",page)|urlencode }}">
+            {{page}}
+            </a></li>
+            {% endfor %}
+            <li class="page-item {% if page_num==max_page %}disabled{% endif %}"><a class="page-link" href="{{request.path}}?{{ nextPageArgs|replace_dict("page_num",page_num|int+1)|urlencode }}">下一页</a></li>
+        </ul>
+    </nav>
+
+{% endmacro %}

@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+
+    <form class="mt-5" id="register_form" action="/api/user/add">
+        <h1>{% block form_title %}注册用户{% endblock %}</h1>
+        <div class="form-group">
+                <label for="usernameInput">用户名</label>
+                <div class="input-group">
+                    <input class="form-control" name="username" id="usernameInput" aria-describedby="usernameHelp"
+                    {% if not usernameInputEnable %}
+                    disabled
+                    {% endif %}
+                    value="{{ show_username }}"
+                    >
+                    <div class="input-group-append" {% if usernameInputEnable %} style="display: none;"{% endif %}>
+                        <button class="btn btn-primary" type="button" onclick="$('#usernameInput').removeAttr('disabled')">修改</button>
+                    </div>
+                </div>
+                <small id="usernameHelp" class="form-text text-muted">请输入用户名，推荐使用真实姓名</small>
+        </div>
+        <div class="form-group" >
+                <label for="emailInput" >校园邮箱</label>
+                <div class="input-group">
+                    <input type="email" class="form-control" name="email" id="emailInput" aria-describedby="emailHelp"
+                    {% if not emailInputEnable %}
+                    disabled
+                    {% endif %}
+                    value={{ show_email }}
+                    >
+                    <div class="input-group-append" {% if emailInputEnable %} style="display: none;"{% endif %}>
+                        <button class="btn btn-primary" type="button" onclick="$('#emailInput').removeAttr('disabled')">修改</button>
+                    </div>
+                </div>
+                <small id="emailHelp" class="form-text text-muted">请输入校园邮箱，稍后我们会向你验证邮箱的正确性</small>
+        </div>
+        <div class="form-group" >
+            <label for="passwordInput">密码</label>
+            <div class="input-group">
+                <input type="password" class="form-control" id="passwordInput" name="password" oninput="checkPasswordDebounce()"
+                {% if not passwordInputEnable %}
+                disabled
+                {% endif %}
+                >
+                <div class="input-group-append" {% if passwordInputEnable %} style="display: none;"{% endif %}>
+                    <button class="btn btn-primary" type="button" onclick="$('#passwordInput').removeAttr('disabled');$('#passwordInputConfirm').removeAttr('disabled')">修改</button>
+                </div>
+            </div>
+        </div>
+        <div class="form-group" >
+            <label for="passwordInputConfirm">确认密码</label>
+            <input type="password" class="form-control" id="passwordInputConfirm"  name="password_confirm" oninput="checkPasswordDebounce()"
+            {% if not passwordInputEnable %}
+            disabled
+            {% endif %}
+            >
+        </div>
+        <button class="btn btn-primary" onclick="" type="submit" id="submit_btn">确认</button>
+    </form>
+    
+
+{% endblock %}
+
+
+{% block script_at_end %}
+{% block update_functions %}
+<script>
+    function before_update(){
+        $("#submit_btn").attr("disabled","true");
+        $("#submit_btn").text("验证中...")
+    }
+    function check_callback(){
+        console.log("执行了callback!");
+        if(usernameField.isValid()&&passwordField.isValid()&&emailField.isValid()&&passwordConfirmField.isValid()){
+            $("#submit_btn").removeAttr("disabled");
+            $("#submit_btn").text("确认");
+        }
+    }
+</script>
+{% endblock %}
+    <script>
+        var usernameField=InputField("#usernameInput",checkUsername,before_update,check_callback);
+        var emailField=InputField("#emailInput",checkEmail,before_update,check_callback);
+        var passwordField=InputField("#passwordInput",undefined,before_update,check_callback);
+        var passwordConfirmField=InputField("#passwordInputConfirm",undefined,before_update,check_callback);
+        function sendRegister(){
+            console.log($("#register_form").serializeArray());
+        }
+        function checkPassword(){
+            var password=passwordField.val();
+            var password_confirm=passwordConfirmField.val();
+            if(!password.length){
+                passwordField.setError("请填写密码!");
+                passwordConfirmField.setError();
+            }
+            else if(!password_confirm.length && password.length){
+                passwordField.clear();
+                passwordConfirmField.clear();
+            }
+            else if(password!=password_confirm){
+                passwordConfirmField.setError("确认密码和密码不一致!");
+                passwordField.setError();
+            }
+            else{
+                passwordConfirmField.setPass();
+                passwordField.setPass();
+            }
+            check_callback();
+        }
+        checkUsernameDebounce=_.debounce(checkUsername,200);
+        checkEmailDebounce=_.debounce(checkEmail,200);
+        checkPasswordDebounce=_.debounce(checkPassword,1000);
+    </script>
+    {% block submit_function %}
+    {% endblock %}
+{% endblock %}

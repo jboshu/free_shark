@@ -1,0 +1,466 @@
+{% extends "layout.html" %}
+{% block content %}
+<body onload="init()">
+<input type="hidden" value={{ page.current }} id="current">
+<input type="hidden" value={{ page.get_from() }} id="from">
+<input type="hidden" value={{ page.get_to() }} id="to">
+
+<div class="row" style="margin-top:2%">
+    <div class="col">
+
+    </div>
+
+    <div class="col-10">
+        <div class="row">
+            {% if current_user.is_authenticated and not current_user.is_forbid %}
+            <div class="col-2">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadCommodity">
+                    上架商品
+                </button>
+            </div>
+            
+            
+            {% endif %}
+            
+            <!-- Modal -->
+            <div class="modal fade" id="uploadCommodity" tabindex="-1" role="dialog" aria-labelledby="uploadCommodityLabel"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="uploadCommodityLabel">上架你的商品</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form action="/commodity/upload" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <div class="modal-body">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" placeholder="商品名称" aria-label="商品名称"
+                                        id="new_commodity_name" name="new_commodity_name"
+                                        aria-describedby="basic-addon1" required> 
+                                </div>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" placeholder="商品种类" aria-label="商品种类" 
+                                    id="new_commodity_type" name="new_commodity_type"
+                                    aria-describedby="basic-addon1" required>
+                                </div>
+                                <div class="input-group mb-3">
+                                    <input type="number" class="form-control" placeholder="价格" aria-label="价格" 
+                                    id="new_commodity_price" name="new_commodity_price"
+                                    aria-describedby="basic-addon1" required>
+                                </div>
+                                <div class="md-form">
+                                    <label for="new_commodity_introduction">介绍</label>
+                                    <textarea id="new_commodity_introduction" name="new_commodity_introduction" class="md-textarea form-control" rows="3"></textarea>
+                                </div>
+                                上传你的实拍图
+                                <br>
+                                <div class="input-group mb-3">
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="photo1" name="photo1">
+                                        <label class="custom-file-label" for="photo1" aria-describedby="photoAddon01">Choose
+                                            file</label>
+                                    </div>
+                                    <div class="input-group-append" style="display: none;">
+                                        <span class="input-group-text" id="photoAddon01">Upload</span>
+                                    </div>
+                                </div>
+                                <div class="input-group mb-3">
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="photo2" name="photo2">
+                                        <label class="custom-file-label" for="photo2" aria-describedby="photoAddon02">Choose
+                                            file</label>
+                                    </div>
+                                    <div class="input-group-append"  style="display: none;">
+                                        <span class="input-group-text" id="photoAddon02">Upload</span>
+                                    </div>
+                                </div>
+                                <div class="input-group mb-3">
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="photo3" name="photo3">
+                                        <label class="custom-file-label" for="photo3" aria-describedby="photoAddon03">Choose
+                                            file</label>
+                                    </div>
+                                    <div class="input-group-append"  style="display: none;">
+                                        <span class="input-group-text" id="photoAddon03">Upload</span>
+                                    </div>
+                                </div>
+                                <div class="input-group mb-4">
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="photo4" name="photo4">
+                                        <label class="custom-file-label" for="photo4" aria-describedby="photoAddon04">Choose
+                                            file</label>
+                                    </div>
+                                    <div class="input-group-append"  style="display: none;">
+                                        <span class="input-group-text" id="photoAddon04">Upload</span>
+                                    </div>
+                                </div>
+                                <div class="input-group mb-3">
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="photo5" name="photo5">
+                                        <label class="custom-file-label" for="photo5" aria-describedby="photoAddon05">Choose
+                                            file</label>
+                                    </div>
+                                    <div class="input-group-append"  style="display: none;">
+                                        <span class="input-group-text" id="photoAddon05">Upload</span>
+                                    </div>
+                                </div>
+            
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                                <button type="submit" class="btn btn-primary">上架</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="input-group flex-nowrap col-4">
+                <input type="text" class="form-control" placeholder="商品种类" aria-label="商品种类" name="choose_commodity_type"
+                    id="commodity_type" {% if request.args.get('commodity_type') %} value={{ request.args.get('commodity_type') }}
+                    {% endif %} aria-describedby="addon-wrapping">
+            </div>
+            <div class="input-group flex-nowrap col-4">
+                <input type="text" class="form-control" placeholder="商品名称" aria-label="商品名称" name="choose_commodity_name"
+                    id="commodity_name" {% if request.args.get('commodity_name') %} value={{ request.args.get('commodity_name') }}
+                    {% endif %} aria-describedby="addon-wrapping">
+            </div>
+            <div class="col-2">
+                <button class="btn btn-primary" onclick="search()">搜索</button>
+            </div>
+            
+        </div>       
+    </div>
+
+    <div class="col">
+    
+    </div>
+</div>
+
+<div class="row" style="margin-top: 2%;">
+    <div class="col">
+
+    </div>
+    <div class="col-12">
+        {% for commodity in commodities %}
+        
+        {{ set_var(loop.length) }}
+        {% if loop.index % 3 == 1 %}
+        <div class="row">
+        {% endif %}
+        <div class="col-4">
+            {% if commodity.status == 0 %}
+                <div class="card" style="margin-top: 1%;">
+            {% else %}
+                <div class="card" style="margin-top: 1%;display: none;">
+            {% endif %}
+                {% set carouselId = 'carouselExampleIndicators'+commodity.id|string  %}
+                {% set carouselTarget = '#carouselExampleIndicators'+commodity.id|string  %}
+                <div id={{ carouselId }} class="carousel slide" data-ride="carousel">
+                    <ol class="carousel-indicators">
+                        {% if commodity.commodity_photo_url1 %}
+                        <li data-target={{ carouselTarget }} data-slide-to="0" class="active"></li>
+                        {% endif %}
+                        {% if commodity.commodity_photo_url2 %}
+                        <li data-target={{ carouselTarget }} data-slide-to="1"></li>
+                        {% endif %}
+                        {% if commodity.commodity_photo_url3 %}
+                        <li data-target={{ carouselTarget }} data-slide-to="2"></li>
+                        {% endif %}
+                        {% if commodity.commodity_photo_url4 %}
+                        <li data-target={{ carouselTarget }} data-slide-to="3"></li>
+                        {% endif %}
+                        {% if commodity.commodity_photo_url5 %}
+                        <li data-target={{ carouselTarget }} data-slide-to="4"></li>
+                        {% endif %}
+                    </ol>
+                    <div class="carousel-inner">
+                        {% if commodity.commodity_photo_url1 %}
+                        <div class="carousel-item active">
+                            <img alt="photo" class="card-img-top" height="300px" src={{ commodity.commodity_photo_url1 }}>
+                        </div>
+                        {% endif %}
+                        {% if commodity.commodity_photo_url2 %}
+                        <div class="carousel-item">
+                            <img alt="photo" class="card-img-top" height="300px" src={{ commodity.commodity_photo_url2 }}>
+                        </div>
+                        {% endif %}
+                        {% if commodity.commodity_photo_url3 %}
+                        <div class="carousel-item">
+                            <img alt="photo" class="card-img-top" height="300px" src={{ commodity.commodity_photo_url3 }}>
+                        </div>
+                        {% endif %}
+                        {% if commodity.commodity_photo_url4 %}
+                        <div class="carousel-item">
+                            <img alt="photo" class="card-img-top" height="300px" src={{ commodity.commodity_photo_url4 }}>
+                        </div>
+                        {% endif %}
+                        {% if commodity.commodity_photo_url5 %}
+                        <div class="carousel-item">
+                            <img alt="photo" class="card-img-top" height="300px" src={{ commodity.commodity_photo_url5 }}>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <a class="carousel-control-prev" href={{ carouselTarget }} role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                    <a class="carousel-control-next" href={{ carouselTarget }} role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title"><b>{{ commodity.commodity_name }}</b></h5>
+                    <div class="row">
+                        <div class="col-8">
+                            <p>种类: <b>{{ commodity.commodity_type }}</b></p>
+                            <p>价格: <b>{{ commodity.price }}</b></p>
+                            <p class="card-text">介绍：{{ commodity.commodity_introduction }}</p>
+                            {% set comment_zone_id = 'comment_zone_'+commodity.id|string %}
+                            <div class="form-group" id={{ comment_zone_id }}>
+                                {% set show_comment_btn_id = 'show_comment_btn_id_'+commodity.id|string %}
+                                {% set FormControlTextarea_id = 'FormControlTextarea_'+commodity.id|string %}
+                                <div class="row">
+                                    <div class="col-6">
+                                        <button type="button" id={{ show_comment_btn_id }} class="btn btn-secondary btn-sm" onclick="show_comment(this.id)">查看评论</button>
+                                    </div>
+                                </div>
+                                
+                                <textarea class="form-control" id={{ FormControlTextarea_id }} rows="5" readonly="readonly" style="margin-top: 2%;"></textarea>
+                            </div>
+                            {% if current_user.is_authenticated %}
+                            <p>
+                                {% set huifu_id = '#huifu-'+commodity.id|string %}
+                                {% set huifu_target_id = 'huifu-'+commodity.id|string %}
+                                <li class="d-inline ml-2"><a href={{ huifu_id }} data-toggle="collapse" class="text-primary">评论</a></li>
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% if current_user.is_authenticated and not current_user.is_forbid %}
+                        <div class="col">
+                            {% set buy_id = 'buy_btn_' + commodity.id|string %}
+                            <button type="button" id={{ buy_id }} class="btn btn-primary" onclick="buy_commodity(this.id)">
+                                预约
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if current_user.is_authenticated %}
+                    <div id={{ huifu_target_id }} class="mt-4 collapse" style="margin-left:5%">
+                        <div>
+                            <div class="row">
+                                {% set comment_content_id = 'content_' + commodity.id|string %}
+                                {% set comment_btn_id = 'content_btn_' + commodity.id|string %}
+                                <div>
+                                    <input id={{ comment_content_id }} type="text" class="input-size" name="content" placeholder="评论" />
+                                </div>
+                                <div class="text-right" style="margin-left: 5%;">
+                                    <button id={{ comment_btn_id }} class="btn btn-primary btn-sm" onclick="add_comment(this.id);">&nbsp;&nbsp;评&nbsp;&nbsp;论&nbsp;&nbsp;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div>
+                        {% set target = '#uploadCommodity' + commodity.id|string %}
+                        {% set target_id = 'uploadCommodity' + commodity.id|string %}
+            
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if loop.index % 3 == 0 %}
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        {% if get_var() % 3 != 0 %}
+        </div>
+        {% endif %}
+        <div class="modal fade" id="hintModal" tabindex="-1" role="dialog" aria-labelledby="hintModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="hintModalLabel">提示</h5>
+                    </div>
+                    <div class="modal-body" id="hintBody">
+                        发送完毕!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class="col">
+
+    </div>
+</div>
+
+    <div class="row" style="margin-top:2%">
+        <div class="col">
+        
+        </div>
+        <div class="col-8">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                    <!-- {{ page.get_list() }} -->
+                    <li class="page-item" id="pre_page">
+                        <a class="page-link" href="javascript:void(0);" onclick="pre_page()">Previous</a>
+                    </li>
+                    {% for i in page.get_list()%}
+                    <li class="page-item"><a class="page-link" href="javascript:void(0);" id={{ i }}
+                            onclick="change_page(this.id)">{{ i }}</a></li>
+                    {%  endfor %}
+                    <li class="page-item" id="next_page">
+                        <a class="page-link" href="javascript:void(0);" onclick="next_page()">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <div class="col">
+        
+        </div>
+    </div>
+    
+    <!-- 提示框 -->
+</body>
+{% endblock %}
+{% block script_at_end %}
+<script>
+    function show_comment(id) {
+        console.log("开始展示")
+
+        ids = id.split("_")
+        commodity_id = ids[ids.length - 1]
+        target_id = 'FormControlTextarea_'+ commodity_id
+        var ele = document.getElementById(target_id);
+        ele.value = "";
+        console.log(commodity_id)
+
+        $.post(
+            '/commodity/show_comment',
+            { 'id': commodity_id },
+            function (data) {
+                data = $.parseJSON(data);
+                console.log("收到了的数据："+data.entity.length)
+                if (data.code == 200) {
+                    var string = "";
+                    for(var i = 0; i < data.entity.length; i++){
+                        var username = JSON.stringify(data.entity[i]['username']).replace(/"/g,'')
+                        var content = JSON.stringify(data.entity[i]['comment_content']).replace(/"/g, '')
+                        ele.value = ele.value+ username + ":" + content + "\n";
+                    }
+                } else {
+                    console.log(data.msg);
+                }
+            }
+        );
+    }
+    var current = parseInt($("#current").val())
+    var from = parseInt($("#from").val())
+    var to = parseInt($("#to").val())
+    function init(){
+        if(current==1){
+            $("#pre_page").addClass("disabled");
+        }
+        if (to == 0) {
+            $("#next_page").addClass("disabled");
+        }
+        if(current == to){
+            $("#next_page").addClass("disabled");
+        }
+        $("#"+current).parent().addClass("active");
+    }
+    function choose_page(){
+        window.location = "/commodity/index?commodity_type=" + $("#commodity_type").val()
+            + "&commodity_name=" + $("#commodity_name").val()+"&current="+current;
+    }
+    function pre_page(){
+        current = current - 1 < from ? from : current - 1
+        choose_page()
+    }
+    function next_page() {
+        current = current + 1 > to ? to : current + 1
+        choose_page()
+    }
+    function change_page(id){
+        current = id
+        choose_page()
+    }
+    function search(){
+        window.location = "/commodity/index?commodity_type=" + $("#commodity_type").val()
+                            +"&commodity_name=" + $("#commodity_name").val();
+    }
+
+    function myCommodity(){
+        window.location = "/commodity/my_commodity";
+    }
+
+    function buy_commodity(id){
+        console.log('我要购买了')
+        ids = id.split("_")
+        commodity_id = ids[ids.length - 1]
+        console.log(commodity_id)
+        $.post(
+            '/commodity/buy',
+            { 'id': commodity_id },
+            function (data) {
+                data = $.parseJSON(data);
+                if (data.code == 200) {
+                    $("#hintBody").text(data.msg);
+                } else {
+                    $("#hintBody").text(data.msg);
+                }
+
+                $("#hintModal").modal("show");
+                setTimeout(function () {
+                    $("#hintModal").modal("hide");
+                    location.reload();
+                }, 2000);
+            }
+        );
+    }
+
+    function add_comment(id){
+        console.log('增加评论')
+        ids = id.split("_")
+        commodity_id = ids[ids.length - 1]
+        content_id = '#content_'+ commodity_id
+        content = $(content_id).val()
+        send_data = { 'id': commodity_id, 'content': content }
+        console.log(send_data)
+        $.ajax({
+            type: "post",
+            url: '/commodity/add_comment',
+            data: JSON.stringify(send_data),
+            contentType: 'application/json; charset=UTF-8',
+            success: function (back) {
+                back = $.parseJSON(back);
+                if (back.code == 200) {
+                    $(content_id).val('')
+                    show_comment_id = 'show_comment_btn_id_' + commodity_id
+                    show_comment(show_comment_id);
+                } else {
+                    console.log(back.msg);
+                }
+            },
+            error: function (xhr, type) {
+                $("#hintBody").text("这是你自己的商品！");
+
+                $("#hintModal").modal("show");
+                setTimeout(function () {
+                    $("#hintModal").modal("hide");
+                    location.reload();
+                }, 2000);
+            }
+        });
+    }
+
+    function add_order(commodity_id){
+        window.location = "/auth/add_order?commodity_id=" + commodity_id;
+    }
+</script>
+{% endblock %}

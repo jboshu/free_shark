@@ -1,0 +1,16 @@
+<style type="text/css">
+	.clearfix:after, .clearfix:before{display:table;content:" ";}
+	.clearfix:after {clear:both;content:"";display:block;height:0;visibility:visible;}
+	.parent{text-align:center;}
+	.child{display:inline-block;}
+	.child{*display:inline;*zoom:1;}/*IE系列IE8+支持，要IE7 IE6 支持需要加入以下代码使display:inline像display:inline-block一样 */
+	.item{float:left;}
+	.item:not(:last-child){margin-right:10px;}
+</style>
+<div class="parent">
+	<ul class="child clearfix">
+		<li class="item">第一项</li>
+		<li class="item">第二项</li>
+		<li class="item">第三项</li>
+	</ul>
+</div>

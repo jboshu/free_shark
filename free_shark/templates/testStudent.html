@@ -1,0 +1,36 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    {{bootstrap.load_css()}}
+</head>
+<body>
+    {% from 'bootstrap/form.html' import render_form %}
+    {{ render_form(form) }}
+    <form method="POST" action="test">
+        {{ form.csrf_token }}
+        {{ form.real_name.label }} {{ form.real_name(size=20) }}
+        {{ form.college.label }} {{ form.college(size=20) }}
+        <input type="submit" value="Go">
+    </form>
+    <table>
+        <tr>
+            <th>学生ID</th>
+            <th>学号</th>
+            <th>姓名</th>
+            <th>学院</th>
+            <th>班级</th>
+            <th>联系</th>
+        </tr>
+     
+        <tr>
+            <td>{{ data.user_id }}</td>
+            <td>{{ data.school_number }}</td>
+            <td>{{ data.real_name }}</td>
+            <td>{{ data.college }}</td>
+            <td>{{ data.banji }}</td>
+            <td>{{ data.contact }}</td>
+        </tr>
+    </table>
+</body>
+</html>

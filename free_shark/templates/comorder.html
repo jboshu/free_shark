@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+{% block content %}
+<body onload="">
+<div class="row" style="margin-top:2%">
+    <div class="col">
+
+    </div>
+    <div class="col-15">
+        <div class="row">
+            {% if current_user.is_authenticated %}
+            <div class="input-group flex-nowrap col-4">
+                <input type="text" class="form-control" placeholder="订单号" aria-label="订单号" name="choose_order_id"
+                    id="order_id" {% if request.args.get('order_id') %} value={{ request.args.get('order_id') }}
+                    {% endif %} aria-describedby="addon-wrapping">
+            </div>
+            <div class="input-group flex-nowrap col-4">
+                <input type="text" class="form-control" placeholder="商品名称" aria-label="商品名称" name="choose_commodity_name"
+                    id="commodity_name" {% if request.args.get('commodity_name') %} value={{ request.args.get('commodity_name') }}
+                    {% endif %} aria-describedby="addon-wrapping">
+            </div>
+            <div class="col-2">
+                <button class="btn btn-primary" onclick="search()">搜索</button>
+            </div>
+            <div class="col-2">
+                <button class="btn btn-primary" onclick="search_status0()">未读订单</button>
+            </div>
+            {% endif %}
+        </div> 
+        
+        <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">订单号</th>
+            <th scope="col">商品号</th>
+            <th scope="col">商品名称</th>
+            <th scope="col">买家学号</th>
+            <th scope="col">卖家学号</th>
+            <th scope="col">订单状态</th>
+            <th scope="col">下单日期</th>
+            <th scope="col">操作</th>
+        </tr>
+        </thead>
+        <tbody class="">
+            {% for orde in ordes %}           
+            <tr>
+                <th scope="row">{{orde._id}}</th>
+                <td>{{orde._commodity_id}}</td>
+                <td>{{orde._commodity_name}}</td> 
+                <td>
+                    <span class="badge badge-pill badge-{% if orde._buyer_id==user_school_number %}danger {% else %}info {% endif %}">{{orde._buyer_id}}</span>
+                </td>
+                <td>
+                    <span class="badge badge-pill badge-{% if orde._school_number==user_school_number %}danger {% else %}info {% endif %}">{{orde._school_number}}</span>
+                </td>
+                <td>
+                    {% if orde._status=="0" %}
+                    未处理
+                    {% endif %}
+                    {% if orde._status=="1" %}
+                    已同意
+                    {% endif %}
+                    {% if orde._status=="2" %}
+                    不同意
+                    {% endif %}
+                </td>
+                <td>{{orde._create_time}}</td>
+                <td>
+                    {% if orde._status=="0"  %}
+                    {% if orde._school_number==user_school_number %}
+                    <button type="button" class="btn btn-primary btn-sm" onclick="update_status_to1({{orde._id}})">同意</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="update_status_to2({{orde._id}})">不同意</button>
+                    {% endif %}
+                    {% endif %}     
+                </td> 
+                <td>
+                        {% if orde._status=="0" %}
+                        {% if orde._buyer_id==user_school_number %}
+                        <button type="button" class="btn btn-danger btn-sm" onclick="delete_order({{orde._id}})">取消订单</button>
+                        {% endif %}
+                        {% endif %}
+                    </td> 
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Modal -->
+    <div class="modal" tabindex="-1" role="dialog" id="ConformOrder">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Modal title</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <p>Modal body text goes here.</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+              </div>
+            </div>
+          </div>
+    </div>
+    
+    <div class="col">
+    
+    </div>
+</div>
+    <!-- 提示框 -->
+</body>
+{% endblock %}
+{% block script_at_end %}
+<script>
+function init(){
+        window.location = "/auth/indexorder";
+        //console.log(ordes);
+        //show_table(ordes)           
+    }
+function search(){
+        window.location = "/auth/searchorder?order_id=" + $("#order_id").val()
+                            +"&commodity_name=" + $("#commodity_name").val();
+                            
+    }
+
+function search_status0(){
+        window.location = "/auth/search_order_status";
+                            
+    }
+function delete_order(id){
+    
+        if(confirm("您确认要删除这个订单吗?注意：删除操作是不可逆的，请仔细考虑!")==true){
+            window.location = "/auth/delete_order?id=" + id;
+        }
+        else{
+
+        }
+        
+    }
+
+function update_status_to1(id){
+
+        if(confirm("是否同意订单？")==true){
+            window.location = "/auth/update?id=" + id
+                          +"&new_status=" + 1;
+        }
+        else{
+
+        }
+        
+    }
+
+function update_status_to2(id){
+
+        if(confirm("是否不同意订单？")==true){
+            window.location = "/auth/update?id=" + id
+                          +"&new_status=" + 2;
+        }
+        else{
+
+        }
+        
+    }
+</script>
+{% endblock %}
